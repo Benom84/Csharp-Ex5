@@ -67,10 +67,6 @@ namespace Exercise05
             m_CurrentValidMovesToPoint.TryGetValue(selectedButton, out buttonIndices);
             buttonRow = buttonIndices.X + 1;
             buttonCol = buttonIndices.Y + 1;
-            //if (buttonRow == 1 && buttonCol == 1)
-            //    Console.WriteLine("On 1,1 Player is: " + m_ActivePlayer);
-
-            Console.WriteLine(buttonIndices.X + "," + buttonIndices.Y + " Player is: " + m_ActivePlayer);
 
             if (m_OthelloGame.PerformMove(m_ActivePlayer, buttonRow, buttonCol))
             {
@@ -79,7 +75,6 @@ namespace Exercise05
                 while (m_ActivePlayer == Othello.ePlayer.Player2 && r_IsPlayingAgainstComputer && !m_MatchEnded)
                 {
                     m_OthelloGame.PerformAutomaticMove(m_ActivePlayer);
-                    Console.WriteLine("Active player is: " + m_ActivePlayer);
                     m_ActivePlayer = Othello.ePlayer.Player1;
                     nextTurn();
                 }
