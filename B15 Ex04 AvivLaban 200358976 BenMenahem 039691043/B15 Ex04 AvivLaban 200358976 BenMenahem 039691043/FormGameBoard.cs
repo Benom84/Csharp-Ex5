@@ -28,6 +28,7 @@ namespace Exercise05
         private bool r_IsPlayingAgainstComputer;
         private int m_TotalPlayer1Wins;
         private int m_TotalPlayer2Wins;
+        private bool m_MatchEnded;
 
         public FormGameBoard(int i_BoardSize, bool i_IsPlayingAgainstComputer)
         {
@@ -38,6 +39,7 @@ namespace Exercise05
             r_IsPlayingAgainstComputer = i_IsPlayingAgainstComputer;
             m_GameSlotsButtons = new Button[i_BoardSize, i_BoardSize];
             initBoardSlotsArea();
+            m_MatchEnded = false;
             m_OthelloGame = new Othello(i_BoardSize, changeSlotControllingPlayer);
             nextTurn();
         }
@@ -65,14 +67,19 @@ namespace Exercise05
             m_CurrentValidMovesToPoint.TryGetValue(selectedButton, out buttonIndices);
             buttonRow = buttonIndices.X + 1;
             buttonCol = buttonIndices.Y + 1;
+            //if (buttonRow == 1 && buttonCol == 1)
+            //    Console.WriteLine("On 1,1 Player is: " + m_ActivePlayer);
+
+            Console.WriteLine(buttonIndices.X + "," + buttonIndices.Y + " Player is: " + m_ActivePlayer);
 
             if (m_OthelloGame.PerformMove(m_ActivePlayer, buttonRow, buttonCol))
             {
                 m_ActivePlayer = m_ActivePlayer == Othello.ePlayer.Player1 ? Othello.ePlayer.Player2 : Othello.ePlayer.Player1;
                 nextTurn();
-                if (m_ActivePlayer == Othello.ePlayer.Player2 && r_IsPlayingAgainstComputer)
+                while (m_ActivePlayer == Othello.ePlayer.Player2 && r_IsPlayingAgainstComputer && !m_MatchEnded)
                 {
                     m_OthelloGame.PerformAutomaticMove(m_ActivePlayer);
+                    Console.WriteLine("Active player is: " + m_ActivePlayer);
                     m_ActivePlayer = Othello.ePlayer.Player1;
                     nextTurn();
                 }
@@ -85,44 +92,52 @@ namespace Exercise05
             clearMarkedAvailableMovesSlots();
             this.Text = String.Format(k_Title, playerToColor(m_ActivePlayer));
             this.Refresh();
-            if (!setPlayerToPlayNext())
-            {
-                int player1Points = m_OthelloGame.GetPlayerScore(Othello.ePlayer.Player1);
-                int player2Points = m_OthelloGame.GetPlayerScore(Othello.ePlayer.Player2);
-                string gameWinner;
-                if (player1Points > player2Points)
-                {
-                    m_TotalPlayer1Wins++;
-                    gameWinner = "Black Won!!";
-                }
-                else if (player2Points > player1Points)
-                {
-                    m_TotalPlayer2Wins++;
-                    gameWinner = "White Won!!";
-                } 
-                else 
-                {
-                    gameWinner = "It's a tie!!";
-                }
-
-                DialogResult result = MessageBox.Show(string.Format(k_EndMenuText, gameWinner, player1Points, player2Points, m_TotalPlayer1Wins, m_TotalPlayer2Wins), "Othello", MessageBoxButtons.YesNo);
-                if (result == System.Windows.Forms.DialogResult.Yes)
-                {
-                    m_ActivePlayer = Othello.ePlayer.Player1;
-                    initBoardSlotsArea();
-                    m_OthelloGame.RestartGame();
-                    nextTurn();
-                }
-                else
-                {
-                    this.Close();
-                }
-            }
-            else
+            if (setPlayerToPlayNext())
             {
                 markAvailableMovesSlots(m_ActivePlayer);
             }
+            else
+            {
+                matchFinished();
+            }
 
+        }
+
+        private void matchFinished()
+        {
+            int player1Points = m_OthelloGame.GetPlayerScore(Othello.ePlayer.Player1);
+            int player2Points = m_OthelloGame.GetPlayerScore(Othello.ePlayer.Player2);
+            string gameWinner;
+
+            m_MatchEnded = true;
+            if (player1Points > player2Points)
+            {
+                m_TotalPlayer1Wins++;
+                gameWinner = "Black Won!!";
+            }
+            else if (player2Points > player1Points)
+            {
+                m_TotalPlayer2Wins++;
+                gameWinner = "White Won!!";
+            }
+            else
+            {
+                gameWinner = "It's a tie!!";
+            }
+
+            DialogResult result = MessageBox.Show(string.Format(k_EndMenuText, gameWinner, player1Points, player2Points, m_TotalPlayer1Wins, m_TotalPlayer2Wins), "Othello", MessageBoxButtons.YesNo);
+            if (result == System.Windows.Forms.DialogResult.Yes)
+            {
+                m_ActivePlayer = Othello.ePlayer.Player1;
+                m_MatchEnded = false;
+                initBoardSlotsArea();
+                m_OthelloGame.RestartGame();
+                nextTurn();
+            }
+            else
+            {
+                this.Close();
+            }
         }
 
         private void changeSlotControllingPlayer(Othello.ePlayer i_PlayerToControl, int i_SlotRow, int i_SlotCol)
@@ -157,6 +172,7 @@ namespace Exercise05
                 {
                     button.BackColor = button.BackColor == r_AvailableMoveColor ? r_LockedMoveColor : button.BackColor;
                     button.Enabled = !k_EnableButton;
+                    button.Click -= button_Click;
                 }
             }
         }
